@@ -1,0 +1,13 @@
+*.swp
+*~
+
+bin
+obj
+
+*.2bpp
+*.4bpp
+*.clr
+*.map
+*.mp7
+*.pc7
+
