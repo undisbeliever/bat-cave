@@ -8,6 +8,7 @@
 .include "common/ppu.h"
 
 .include "vram.h"
+.include "map.h"
 .include "resources/font.h"
 
 .setcpu "65816"
@@ -67,8 +68,10 @@
 	STA	MDMAEN
 
 
+	JSR	Map::SetupScreen
 
-	LDA	#TM_BG1
+
+	LDA	#TM_BG1 | TM_BG2
 	STA	TM
 
 	LDA	#NMITIMEN_VBLANK_FLAG | NMITIMEN_AUTOJOY_FLAG
@@ -86,7 +89,20 @@
 .I16
 	SetupScreen
 
+	LDA	#$7E
+	PHA
+	PLB
+
+	REP	#$30
+.A16
+	JSR	Map::Init
+
 	REPEAT
+		; ::TODO move to Map::Process ::
+.import Map__GenerateChunk
+		JSR	Map__GenerateChunk
+
+		WAI
 	FOREVER
 .endroutine
 

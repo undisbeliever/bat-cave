@@ -1,5 +1,5 @@
 
 .define VERSION 1
-.define REGION PAL
+.define REGION NTSC
 .define ROM_NAME "BAT CAVE"
 

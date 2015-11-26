@@ -7,7 +7,7 @@
 .include "common/console.h"
 
 .include "vram.h"
-.include "background.h"
+.include "map.h"
 
 .setcpu "65816"
 
@@ -59,6 +59,7 @@
 	LDY	#MDMAEN_DMA0
 	STY	MDMAEN
 
+	JSR	Map::VBlank
 
 	; Load State
 	REP	#$30
