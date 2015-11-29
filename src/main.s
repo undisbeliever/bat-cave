@@ -98,9 +98,7 @@
 	JSR	Map::Init
 
 	REPEAT
-		; ::TODO move to Map::Process ::
-.import Map__GenerateChunk
-		JSR	Map__GenerateChunk
+		JSR	Map::ProcessFrame
 
 		WAI
 	FOREVER

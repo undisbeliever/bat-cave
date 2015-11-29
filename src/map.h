@@ -25,6 +25,12 @@
 	;; REQUIRES: 16 bit A, 8 bit Index, DB access registers, DP = $4300, VBlank or Force Blank
 	.importroutine VBlank
 
+
+	;; Processes a single frame of the Map
+	;;
+	;; REQUIRES: 16 bit A, 16 bit Index, DB = $7E
+	.importroutine ProcessFrame
+
 .endimportmodule
 
 .endif

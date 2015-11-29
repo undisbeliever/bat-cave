@@ -13,11 +13,23 @@
 
 .setcpu "65816"
 
+
+.module Map
+
 .define CHUNK_WIDTH 8
+
+.define PADDING_WIDTH 64
+.assert 256 .mod PADDING_WIDTH = 0, error, "Bad PADDING_WIDTH"
+
 SCREEN_HEIGHT = 224
 TILE_HEIGHT = SCREEN_HEIGHT / 8
 
 CAVE_COLOR = $114C
+
+.enum State
+	INIT		= 0
+.endenum
+
 
 .segment "SHADOW"
 	;; Address to load the tileBuffer to VRAM
@@ -34,20 +46,25 @@ CAVE_COLOR = $114C
 
 
 .segment "WRAM7E"
-	;; The y pos of the ceiling for each x position
-	;; the last CHUNK_WIDTH entries are equal to the first CHUNK_WIDTH entries
-	;; (word accessed)
-	ceiling:	.res 2 * (256 + CHUNK_WIDTH * 2)
-
-	;; The ypos of the floor for each x position
-	;; the last CHUNK_WIDTH entries are equal to the first CHUNK_WIDTH entries
-	;; Floor MUST always be > ceiling AND < SCREEN_HEIGHT
-	;; (word accessed)
-	floor:		.res 2 * (256 + CHUNK_WIDTH * 2)
+	;; The game state
+	state:		.res 2
 
 	;; The current xVeclocity of the background
 	;; (0:16:16 fixed point)
 	xVelocity:	.res 4
+
+	;; The y pos of the ceiling for each x position
+	;; (word accessed)
+	ceiling:	.res 2 * (256 + PADDING_WIDTH)
+
+	;; The ypos of the floor for each x position
+	;; Floor MUST always be > ceiling AND < SCREEN_HEIGHT
+	;; (word accessed)
+	floor:		.res 2 * (256 + PADDING_WIDTH)
+
+	;; The offset between the xPos and the floor/ceiling tables
+	;; (uint16)
+	xOffset:	.res 2
 
 	;; Index position (within ceiling/floor) of the current chunk to be generated
 	;; (word index)
@@ -76,8 +93,6 @@ mapBuffer_size = * - mapBuffer
 
 .code
 
-
-.module Map
 
 ; DB = $80
 ; Force blank, no interrupts
@@ -129,7 +144,8 @@ mapBuffer_size = * - mapBuffer
 .A16
 .I16
 .routine Init
-	LDA	#0
+	STZ	state
+
 	STZ	xVelocity
 	STZ	xVelocity + 2
 	STZ	xPos
@@ -137,9 +153,104 @@ mapBuffer_size = * - mapBuffer
 	STZ	chunkPos
 	STZ	updateTileBufferVram
 
+
+	; Build initial map
+	STZ	chunkPos
+
+	.repeat	256 / PADDING_WIDTH + 1
+		JSR	GenerateMap
+	.endrepeat
+
+	STZ	chunkPos
+	STZ	xOffset
+
+
+
 	LDA	#$FFFF
 	STA	chunkVramMapOffset
 	STA	chunkVramTileOffset
+
+	RTS
+.endroutine
+
+
+
+; DB = $7E
+.A16
+.I16
+.routine ProcessFrame
+	LDX	state
+	JMP	(.loword(ProcessFrameStateTable), X)
+.endroutine
+
+.rodata
+.proc ProcessFrameStateTable
+	.addr	ProcessFrame_Init
+.endproc
+
+.code
+
+
+; DB = $7E
+.A16
+.I16
+.routine ProcessFrame_Init
+	JSR	GenerateChunk
+
+	LDA	chunkPos
+	CMP	#256 * 2 + 2
+	IF_GE
+		BRA	*
+	ENDIF
+
+	RTS
+.endroutine
+
+
+; DB = $7E
+.A16
+.I16
+.routine GenerateMap
+	; Shift map PADDING_WIDTH pixels to the left
+	LDX	#.loword(ceiling + 2 * PADDING_WIDTH)
+	LDY	#.loword(ceiling)
+	LDA	#256 * 2 - 1
+	MVN	$7E, $7E
+
+	LDX	#.loword(floor + 2 * PADDING_WIDTH)
+	LDY	#.loword(floor)
+	LDA	#256 * 2 - 1
+	MVN	$7E, $7E
+
+
+	; Move map pointers
+	LDA	chunkPos
+	SEC
+	SBC	#PADDING_WIDTH * 2
+	STA	chunkPos
+
+	LDA	xOffset
+	CLC
+	ADC	#PADDING_WIDTH
+	STA	xOffset
+
+
+	; Generate new segment
+	LDX	#256 * 2
+
+	; Generate height/floor map
+	LDY	#PADDING_WIDTH
+	REPEAT
+		; ::TODO code::
+		LDA	#25
+		STA	ceiling, X
+		LDA	#128
+		STA	floor, X
+
+		INX
+		INX
+		DEY
+	UNTIL_ZERO
 
 	RTS
 .endroutine
@@ -155,25 +266,6 @@ tmp_ceiling	:= tmp3
 tmp_floor	:= tmp4
 tmp_height	:= tmp5
 tmp_tileBufferPos := tmp6
-
-	LDX	chunkPos
-
-	; Generate height/floor map
-	LDY	#CHUNK_WIDTH
-	REPEAT
-		; ::TODO code::
-		LDA	#25
-		STA	ceiling, X
-		LDA	#128
-		STA	floor, X
-
-		INX
-		INX
-		DEY
-	UNTIL_ZERO
-
-	; ::TODO mirror height/ceiling map for collision testing
-
 
 	STZ	tmp_tileBufferPos
 
@@ -259,12 +351,6 @@ tmp_tileBufferPos := tmp6
 
 	REP	#$31
 .A16
-	; Wrap chunk pos
-	CPX	#(256 + CHUNK_WIDTH) * 2
-	IF_GE
-		STZ	chunkPos
-	ENDIF
-
 
 	LDA	tmp_tileBufferPos
 	; C clear
