@@ -5,7 +5,7 @@ UNTECH_DIR  = untech/src
 SRC_DIR     = src
 
 UNTECH_MODS = common/reset common/sfc-header common/math/division common/math/multiplication
-UNTECH_MODS+= common/string common/console
+UNTECH_MODS+= common/string common/console metasprite/metasprite
 
 SOURCES     = $(wildcard $(SRC_DIR)/*.s $(SRC_DIR)/*/*.s $(SRC_DIR)/*/*/*.s)
 UNTECH_SRC  = $(patsubst %,$(UNTECH_DIR)/%.s,$(UNTECH_MODS))
@@ -42,7 +42,8 @@ $(SRC_OBJ): $(SRC_INC) $(SRC_INC) $(CONFIG_FILE) config.h Makefile
 obj/%.o: src/%.s
 	ca65 -I . -I $(UNTECH_DIR) -o $@ $<
 
-obj/tests/font.o: $(wildcard resources/*)
+obj/resources/font.o: $(wildcard resources/font.*)
+obj/resources/metasprites.o: $(wildcard resources/metasprites/*)
 
 
 .PHONY: dirs

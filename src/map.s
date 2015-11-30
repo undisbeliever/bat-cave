@@ -16,18 +16,27 @@
 
 .module Map
 
+
 .define CHUNK_WIDTH 8
 
 .define PADDING_WIDTH 64
 .assert 256 .mod PADDING_WIDTH = 0, error, "Bad PADDING_WIDTH"
+.assert PADDING_WIDTH > 8, error, "Bad PADDING_WIDTH"
 
 SCREEN_HEIGHT = 224
 TILE_HEIGHT = SCREEN_HEIGHT / 8
 
+;; Inital X velocity
+;; (0:16:16)
+X_VELOCITY_INIT = $17C00
+
 CAVE_COLOR = $114C
 
+
 .enum State
-	INIT		= 0
+	INIT			= 0
+	SCROLLING		= 2
+	SCROLL_AFTER_RENDER	= 4
 .endenum
 
 
@@ -42,33 +51,37 @@ CAVE_COLOR = $114C
 
 	;; The current xPos of the background
 	;; (0:16:16 fixed point)
-	xPos:		.res 4
+	xPos:			.res 4
 
 
 .segment "WRAM7E"
 	;; The game state
-	state:		.res 2
+	state:			.res 2
 
 	;; The current xVeclocity of the background
+	;; abs(xVelocity) MUST <= 8, and SHOULD BE <= 4.0
 	;; (0:16:16 fixed point)
-	xVelocity:	.res 4
+	xVelocity:		.res 4
+
+	;; The offset between the xPos and the floor/ceiling tables
+	;; (uint16)
+	xOffset:		.res 2
+
+	;; The location to draw the next chunk in
+	nextXposDrawChunk:	.res 2
 
 	;; The y pos of the ceiling for each x position
 	;; (word accessed)
-	ceiling:	.res 2 * (256 + PADDING_WIDTH)
+	ceiling:		.res 2 * (256 + PADDING_WIDTH)
 
 	;; The ypos of the floor for each x position
 	;; Floor MUST always be > ceiling AND < SCREEN_HEIGHT
 	;; (word accessed)
-	floor:		.res 2 * (256 + PADDING_WIDTH)
-
-	;; The offset between the xPos and the floor/ceiling tables
-	;; (uint16)
-	xOffset:	.res 2
+	floor:			.res 2 * (256 + PADDING_WIDTH)
 
 	;; Index position (within ceiling/floor) of the current chunk to be generated
 	;; (word index)
-	chunkPos:	.res 2
+	chunkPos:		.res 2
 
 	;; The index of the VRAM word addres tiles to upload
 	;; (word index)
@@ -84,12 +97,27 @@ tileBuffer_size = * - tileBuffer
 mapBuffer_size = * - mapBuffer
 
 
+	;; Generate patterns of the map
+	.proc generate
+		;; Velocity (up/down) of map when generating it
+		;; (1:7:16 fint)
+		velocity:	.res 2
+
+		;; Position of the Velocity (up/down) of map when generating it
+		;; (1:7:16 fint)
+		current:	.res 2
+	.endproc
+
+
 	tmp1:			.res 2
 	tmp2:			.res 2
 	tmp3:			.res 2
 	tmp4:			.res 2
 	tmp5:			.res 2
 	tmp6:			.res 2
+
+
+	.exportlabel xPos
 
 .code
 
@@ -146,12 +174,22 @@ mapBuffer_size = * - mapBuffer
 .routine Init
 	STZ	state
 
-	STZ	xVelocity
-	STZ	xVelocity + 2
 	STZ	xPos
 	STZ	xPos + 2
 	STZ	chunkPos
 	STZ	updateTileBufferVram
+
+	LDA	#.loword(X_VELOCITY_INIT)
+	STA	xVelocity
+	LDA	#.hiword(X_VELOCITY_INIT)
+	STA	xVelocity + 2
+
+
+	; ::DEBUG initial data::
+	LDA	#$00C0
+	STA	generate::velocity
+	LDA	#$0800
+	STA	generate::current
 
 
 	; Build initial map
@@ -186,6 +224,8 @@ mapBuffer_size = * - mapBuffer
 .rodata
 .proc ProcessFrameStateTable
 	.addr	ProcessFrame_Init
+	.addr	ProcessFrame_Scrolling
+	.addr	ProcessFrame_AfterRender
 .endproc
 
 .code
@@ -195,12 +235,68 @@ mapBuffer_size = * - mapBuffer
 .A16
 .I16
 .routine ProcessFrame_Init
-	JSR	GenerateChunk
+	JSR	RenderChunk
 
 	LDA	chunkPos
 	CMP	#256 * 2 + 2
 	IF_GE
-		BRA	*
+		LDA	#8
+		STA	nextXposDrawChunk
+
+		LDX	#State::SCROLLING
+		STX	state
+	ENDIF
+
+	RTS
+.endroutine
+
+
+; DB = $7E
+.A16
+.I16
+.routine ProcessFrame_AfterRender
+	; Executed on the frame after a RenderChunk call
+	;
+	; This is to prevent lag by preventing a GenerateMap routine
+	; and a RenderChunk routine from executing in the same frame.
+
+	LDA	chunkPos
+	CMP	#(256 + PADDING_WIDTH) * 2
+	IF_GE
+		JSR	GenerateMap
+	ENDIF
+
+	LDX	#State::SCROLLING
+	STX	state
+
+	.assert *= ProcessFrame_Scrolling, error, "Bad Flow"
+.endroutine
+
+
+; DB = $7E
+.A16
+.I16
+.routine ProcessFrame_Scrolling
+	CLC
+	LDA	xPos
+	ADC	xVelocity
+	STA	xPos
+
+	LDA	xPos + 2
+	ADC	xVelocity + 2
+	STA	xPos + 2
+
+	CMP	nextXposDrawChunk
+	IF_GE
+		JSR	RenderChunk
+
+		LDA	nextXposDrawChunk
+		CLC
+		ADC	#CHUNK_WIDTH
+		STA	nextXposDrawChunk
+
+		LDX	#State::SCROLL_AFTER_RENDER
+		STX	state
 	ENDIF
 
 	RTS
@@ -235,16 +331,45 @@ mapBuffer_size = * - mapBuffer
 	STA	xOffset
 
 
+	; ::TODO replace with proper random movement::
+	; ::TODO ramp up difficulty as level progresses::
+
 	; Generate new segment
 	LDX	#256 * 2
 
 	; Generate height/floor map
 	LDY	#PADDING_WIDTH
 	REPEAT
-		; ::TODO code::
-		LDA	#25
+		LDA	generate::velocity
+		CLC
+		ADC	generate::current
+		CMP	#8 << 8
+		IF_LT
+			LDA	generate::velocity
+			NEG
+			STA	generate::velocity
+
+			LDA	#8 << 8
+		ELSE
+			CMP	#(SCREEN_HEIGHT - 128) << 8
+			IF_GE
+				LDA	generate::velocity
+				NEG
+				STA	generate::velocity
+
+				LDA	#(SCREEN_HEIGHT - 128) << 8
+			ENDIF
+		ENDIF
+
+		STA	generate::current
+
+
+		XBA
+		AND	#$00FF
 		STA	ceiling, X
-		LDA	#128
+
+		CLC
+		ADC	#119
 		STA	floor, X
 
 		INX
@@ -259,7 +384,7 @@ mapBuffer_size = * - mapBuffer
 ; DB = $7E
 .A16
 .I16
-.routine GenerateChunk
+.routine RenderChunk
 tmp_color	:= tmp1
 tmp_invertColor := tmp2
 tmp_ceiling	:= tmp3

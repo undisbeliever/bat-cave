@@ -7,6 +7,7 @@
 .include "common/console.h"
 .include "common/ppu.h"
 
+.include "entity.h"
 .include "vram.h"
 .include "map.h"
 .include "resources/font.h"
@@ -71,7 +72,7 @@
 	JSR	Map::SetupScreen
 
 
-	LDA	#TM_BG1 | TM_BG2
+	LDA	#TM_BG1 | TM_BG2 | TM_OBJ
 	STA	TM
 
 	LDA	#NMITIMEN_VBLANK_FLAG | NMITIMEN_AUTOJOY_FLAG
@@ -96,9 +97,11 @@
 	REP	#$30
 .A16
 	JSR	Map::Init
+	JSR	Entity::Init
 
 	REPEAT
 		JSR	Map::ProcessFrame
+		JSR	Entity::ProcessFrame
 
 		WAI
 	FOREVER

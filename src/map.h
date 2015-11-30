@@ -8,6 +8,10 @@
 .setcpu "65816"
 
 .importmodule Map
+	;; The current xPos of the background
+	;; (0:16:16 fixed point)
+	.importlabel xPos
+
 
 	;; Sets up the sreen
 	;;

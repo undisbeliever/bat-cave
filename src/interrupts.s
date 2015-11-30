@@ -5,6 +5,7 @@
 .include "common/registers.inc"
 
 .include "common/console.h"
+.include "metasprite/metasprite.h"
 
 .include "vram.h"
 .include "map.h"
@@ -60,6 +61,8 @@
 	STY	MDMAEN
 
 	JSR	Map::VBlank
+
+	JSR	MetaSprite::VBlank
 
 	; Load State
 	REP	#$30
