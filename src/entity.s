@@ -7,19 +7,17 @@
 
 .include "resources/metasprites.h"
 
+.include "bat.h"
 .include "map.h"
 
 .setcpu "65816"
 
 MetaSpriteDpOffset = EntityStruct::metasprite
 
-FRAME_DELAY = 10
-
 .module Entity
 
-
 .segment "SHADOW"
-	bat:	.res .sizeof(EntityStruct)
+	bat:	.res ENTITY_STRUCT_SIZE
 
 
 .code
@@ -36,21 +34,10 @@ FRAME_DELAY = 10
 	LDA	#bat
 	TCD
 
-	LDA	#128
-	STZ	z:EntityStruct::xPos
-	STA	z:EntityStruct::xPos + 2
+	LDX	#.loword(Bat::FunctionTable)
+	STX	z:EntityStruct::functionPtr
 
-	LDA	#112
-	STZ	z:EntityStruct::yPos
-	STA	z:EntityStruct::yPos + 2
-
-
-	LDA	#MetaSprites::Bat::frameSetId
-	LDY	#0
-	JSR	MetaSprite::Init
-
-	LDA	#MetaSprites::Bat::Frames::FlyRight0
-	JSR	MetaSprite::SetFrame
+	JSR	(EntityFunctions::Init, X)
 
 	JSR	MetaSprite::Activate
 
@@ -71,11 +58,8 @@ FRAME_DELAY = 10
 	LDA	#.loword(bat)
 	TCD
 
-	; ::TODO check collisions::
-
-	; ::TODO move entity::
-
-	; ::TODO animate the bat::
+	LDX	z:EntityStruct::functionPtr
+	JSR	(EntityFunctions::ProcessFrame, X)
 
 	PLD
 	.assert *= RenderFrame, error, "Bad Flow"
