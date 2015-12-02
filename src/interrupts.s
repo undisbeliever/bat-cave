@@ -64,6 +64,14 @@
 
 	JSR	MetaSprite::VBlank
 
+
+	; Ensure Joypad can be read
+	LDA	#HVJOY_AUTOJOY
+	REPEAT
+		BIT	HVJOY
+	UNTIL_ZERO
+
+
 	; Load State
 	REP	#$30
 	PLY

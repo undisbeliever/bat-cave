@@ -7,7 +7,9 @@
 
 .include "resources/metasprites.h"
 
+.include "gameloop.h"
 .include "map.h"
+
 
 .setcpu "65816"
 
@@ -131,10 +133,9 @@ AUTOSCROLL_FORCE_PADDING = 12
 	; Check for collisions
 	JSR	Map::CheckEntityCollision
 	IF_C_SET
-		; ::TODO set game over condition::
-		BRA	*
+		LDX	#GameState::GAME_OVER
+		STX	GameLoop::state
 	ENDIF
-
 
 	; ::TODO animate the bat::
 

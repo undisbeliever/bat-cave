@@ -22,11 +22,9 @@ MetaSpriteDpOffset = EntityStruct::metasprite
 
 .code
 
-.A8
+.A16
 .I16
 .routine Init
-	REP	#$30
-.A16
 	JSR	MetaSprite::Reset
 
 	PHD
@@ -43,8 +41,6 @@ MetaSpriteDpOffset = EntityStruct::metasprite
 
 	PLD
 
-	SEP	#$20
-.A8
 	RTS
 .endroutine
 
@@ -62,7 +58,7 @@ MetaSpriteDpOffset = EntityStruct::metasprite
 	JSR	(EntityFunctions::ProcessFrame, X)
 
 	PLD
-	.assert *= RenderFrame, error, "Bad Flow"
+	RTS
 .endroutine
 
 .A16
