@@ -8,6 +8,7 @@
 .include "common/console.h"
 .include "common/ppu.h"
 
+.include "entity.h"
 .include "vram.h"
 .include "resources/font.h"
 
@@ -208,6 +209,96 @@ mapBuffer_size = * - mapBuffer
 	STA	chunkVramMapOffset
 	STA	chunkVramTileOffset
 
+	RTS
+.endroutine
+
+
+
+; DB = $7E
+.A16
+.I16
+.routine CheckEntityCollision
+tmp_mapIndex	:= tmp1
+tmp_width	:= tmp2
+tmp_top		:= tmp3
+tmp_bottom	:= tmp4
+
+	LDX	z:EntityStruct::metasprite + MetaSpriteStruct::currentFrame
+	LDA	f:MS_FrameOffset + MetaSprite__Frame::tileCollisionHitbox, X
+	BEQ	NoCollision
+	TAX
+
+
+	LDA	f:MS_TileCollisionOffset + MetaSprite__TileCollisionHitbox::xOffset, X
+	AND	#$00FF
+	CLC
+	ADC	z:EntityStruct::xPos + 2
+	SEC
+	SBC	#MetaSprite::POSITION_OFFSET
+	SEC
+	SBC	xOffset
+	BMI	NoCollision
+
+	ASL
+	STA	tmp_mapIndex
+
+
+	LDA	f:MS_TileCollisionOffset + MetaSprite__TileCollisionHitbox::width, X
+	AND	#$00FF
+	STA	tmp_width
+	TAY
+	ASL
+	; C Clear
+	ADC	tmp_mapIndex
+	CMP	#2 * (256 + PADDING_WIDTH)
+	BGE	Collision
+
+
+
+	LDA	f:MS_TileCollisionOffset + MetaSprite__TileCollisionHitbox::yOffset, X
+	AND	#$00FF
+	CLC
+	ADC	z:EntityStruct::yPos + 2
+	SEC
+	SBC	#MetaSprite::POSITION_OFFSET
+	BMI	Collision
+	STA	tmp_top
+
+
+	LDA	f:MS_TileCollisionOffset + MetaSprite__TileCollisionHitbox::height, X
+	AND	#$00FF
+	CLC
+	ADC	tmp_top
+	STA	tmp_bottom
+
+
+	; Y = tmp_width
+	LDX	tmp_mapIndex
+	LDA	tmp_top
+	REPEAT
+		CMP	ceiling, X
+		BLT	Collision
+
+		DEY
+	UNTIL_ZERO
+
+
+	LDX	tmp_mapIndex
+	LDY	tmp_width
+	LDA	tmp_bottom
+	REPEAT
+		CMP	floor, X
+		BGE	Collision
+
+		DEY
+	UNTIL_ZERO
+
+NoCollision:
+	CLC
+	RTS
+
+Collision:
+	SEC
 	RTS
 .endroutine
 
@@ -607,6 +698,13 @@ tmp_tileBufferPos := tmp6
 
 	RTS
 .endroutine
+
+
+.segment METASPRITE_FRAME_DATA_BLOCK
+MS_FrameOffset = .bankbyte(*) << 16
+
+.segment METASPRITE_TILE_COLLISION_HITBOXES_BLOCK
+MS_TileCollisionOffset = .bankbyte(*) << 16
 
 .endmodule
 

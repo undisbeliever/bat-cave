@@ -66,7 +66,48 @@ AUTOSCROLL_FORCE_PADDING = 12
 .A16
 .I16
 .routine ProcessFrame
-	; ::TODO move entity::
+	; ::DEBUG move bat with joypad::
+	; ::TODO do properly::
+	LDA	f:JOY1
+	IF_BIT	#JOY_LEFT
+		LDXY	#-$20000
+
+	ELSE_BIT #JOY_RIGHT
+		LDXY	#$20000
+
+	ELSE
+		LDXY	#0
+	ENDIF
+	STXY	BES::xVecl
+
+	LDA	f:JOY1
+	IF_BIT	#JOY_UP
+		LDXY	#-$C000
+
+	ELSE_BIT #JOY_DOWN
+		LDXY	#$C000
+	ELSE
+		LDXY	#0
+	ENDIF
+	STXY	BES::yVecl
+
+
+	; Move entity
+	CLC
+	LDA	z:BES::xVecl
+	ADC	z:BES::xPos
+	STA	z:BES::xPos
+	LDA	z:BES::xVecl + 2
+	ADC	z:BES::xPos + 2
+	STA	z:BES::xPos + 2
+
+	CLC
+	LDA	z:BES::yVecl
+	ADC	z:BES::yPos
+	STA	z:BES::yPos
+	LDA	z:BES::yVecl + 2
+	ADC	z:BES::yPos + 2
+	STA	z:BES::yPos + 2
 
 
 	; Force the bat onscreen
@@ -86,7 +127,13 @@ AUTOSCROLL_FORCE_PADDING = 12
 		STA	z:BES::xPos + 2
 	ENDIF
 
-	; ::TODO collision testing::
+
+	; Check for collisions
+	JSR	Map::CheckEntityCollision
+	IF_C_SET
+		; ::TODO set game over condition::
+		BRA	*
+	ENDIF
 
 
 	; ::TODO animate the bat::

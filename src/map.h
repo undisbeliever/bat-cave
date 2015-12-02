@@ -30,6 +30,15 @@
 	.importroutine VBlank
 
 
+	;; Checks if an entity has collided with the map
+	;;
+	;; REQUIRES: 16 bit A, 16 bit Index, DB = $7E
+	;;
+	;; INPUT: DP = entity
+	;; OUTPUT: C set if entity is touching the map
+	.importroutine CheckEntityCollision
+
+
 	;; Processes a single frame of the Map
 	;;
 	;; REQUIRES: 16 bit A, 16 bit Index, DB = $7E
