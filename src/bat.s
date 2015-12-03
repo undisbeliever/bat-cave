@@ -16,6 +16,15 @@
 
 FRAME_DELAY = 8
 
+CONFIG	GRAVITY,		$000222
+CONFIG	RISE_ACCELERATION,	$006000
+CONFIG	DIVE_ACCELERATION,	$009000
+CONFIG	HORIZONTAL_ACCELERATION,$002000
+
+MAX_Y_VELOCITY = 4
+MAX_X_VELOCITY = 2
+
+
 .module Bat
 
 .entitystruct	BatEntityStruct
@@ -86,30 +95,96 @@ AUTOSCROLL_FORCE_PADDING = 12
 .A16
 .I16
 .routine ProcessFrame
-	; ::DEBUG move bat with joypad::
-	; ::TODO do properly::
 	LDA	Controller::current
 	IF_BIT	#JOY_LEFT
-		LDXY	#-$20000
+		SEC
+		LDA	z:BES::xVecl
+		SBC	#.loword(HORIZONTAL_ACCELERATION)
+		STA	z:BES::xVecl
+		LDA	z:BES::xVecl + 2
+		SBC	#.hiword(HORIZONTAL_ACCELERATION)
+
+		CMP	#.loword(-MAX_X_VELOCITY + 1)
+		IF_MINUS
+			LDA	#.loword(-MAX_X_VELOCITY)
+		ENDIF
+		STA	z:BES::xVecl + 2
 
 	ELSE_BIT #JOY_RIGHT
-		LDXY	#$20000
+		CLC
+		LDA	z:BES::xVecl
+		ADC	#.loword(HORIZONTAL_ACCELERATION)
+		STA	z:BES::xVecl
+		LDA	z:BES::xVecl + 2
+		ADC	#.hiword(HORIZONTAL_ACCELERATION)
 
-	ELSE
-		LDXY	#0
+		CMP	#MAX_X_VELOCITY + 1
+		IF_PLUS
+			LDA	#MAX_X_VELOCITY
+		ENDIF
+		STA	z:BES::xVecl + 2
 	ENDIF
-	STXY	BES::xVecl
 
+
+
+	; Handle Rise
+	LDA	Controller::pressed
+	IF_BIT	#JOY_B
+		SEC
+		LDA	z:BES::yVecl
+		SBC	#.loword(RISE_ACCELERATION)
+		STA	z:BES::yVecl
+		LDA	z:BES::yVecl + 2
+		SBC	#.hiword(RISE_ACCELERATION)
+
+		CMP	#.loword(-MAX_Y_VELOCITY + 1)
+		IF_MINUS
+			LDA	#.loword(-MAX_Y_VELOCITY)
+		ENDIF
+		STA	z:BES::yVecl + 2
+	ENDIF
+
+
+	; Handle Diving
+	LDA	Controller::pressed
+	IF_BIT	#JOY_Y | JOY_A
+		CLC
+		LDA	z:BES::yVecl
+		ADC	#.loword(DIVE_ACCELERATION)
+		STA	z:BES::yVecl
+		LDA	z:BES::yVecl + 2
+		ADC	#.hiword(DIVE_ACCELERATION)
+		STA	z:BES::yVecl + 2
+
+		; Don't clamp y Velocity, handled by gravity
+	ENDIF
+
+
+	; Add gravity
 	LDA	Controller::current
-	IF_BIT	#JOY_UP
-		LDXY	#-$C000
-
-	ELSE_BIT #JOY_DOWN
-		LDXY	#$C000
+	IF_BIT	#JOY_B
+		CLC
+		LDA	z:BES::yVecl
+		ADC	#.loword(GRAVITY)
+		STA	z:BES::yVecl
+		LDA	z:BES::yVecl + 2
+		ADC	#.hiword(GRAVITY)
 	ELSE
-		LDXY	#0
+		; Less gravity if B pressed
+		CLC
+		LDA	z:BES::yVecl
+		ADC	#.loword(GRAVITY / 2)
+		STA	z:BES::yVecl
+		LDA	z:BES::yVecl + 2
+		ADC	#.hiword(GRAVITY / 2)
 	ENDIF
-	STXY	BES::yVecl
+
+	; Clamp Y velocity
+	CMP	#MAX_Y_VELOCITY + 1
+	IF_PLUS
+		LDA	#MAX_Y_VELOCITY
+	ENDIF
+	STA	z:BES::yVecl + 2
 
 
 	; Move entity
