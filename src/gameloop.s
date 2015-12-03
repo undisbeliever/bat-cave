@@ -4,6 +4,7 @@
 .include "common/modules.inc"
 .include "common/structure.inc"
 .include "common/registers.inc"
+.include "common/incdec.inc"
 
 .include "common/console.h"
 .include "common/ppu.h"
@@ -21,7 +22,11 @@
 
 .segment "SHADOW"
 	state:		.res 2
+	frameCounter:	.res 4
+	scoreCursor:	.res 2
 
+SCORE_XPOS = 20
+SCORE_YPOS = 20
 
 .exportlabel state
 
@@ -86,6 +91,18 @@
 	LDA	#TM_BG1 | TM_BG2 | TM_OBJ
 	STA	TM
 
+
+	LDA	#.lobyte(-SCORE_XPOS)
+	STA	BG1HOFS
+	LDA	#.hibyte(-SCORE_XPOS)
+	STA	BG1HOFS
+
+	LDA	#.lobyte(-SCORE_YPOS - 1)
+	STA	BG1VOFS
+	LDA	#.hibyte(-SCORE_YPOS - 1)
+	STA	BG1VOFS
+
+
 	LDA	#NMITIMEN_VBLANK_FLAG | NMITIMEN_AUTOJOY_FLAG
 	STA	NMITIMEN
 
@@ -101,6 +118,14 @@
 
 	SetupScreen
 
+	JSR	Console::Init
+
+	LDA	#Font::GREEN
+	JSR	Console::SetColor
+
+	LDX	Console::cursor
+	STX	scoreCursor
+
 	PEA	$807E
 	PLB			; $7E
 
@@ -109,12 +134,30 @@
 	JSR	Map::Init
 	JSR	Entity::Init
 
+	STZ	frameCounter
+	STZ	frameCounter + 2
+
 	REPEAT
 Continue:
 	STZ	state
 		REPEAT
 			JSR	Controller::Update
 			JSR	Random::AddJoypadEntropy
+
+			; Print score
+			LDX	scoreCursor
+			STX	Console::cursor
+
+			LDXY	frameCounter
+			INCXY
+			STXY	frameCounter
+
+			SEP	#$20
+.A8
+			JSR	Console::PrintInt_U32XY
+
+			REP	#$30
+.A16
 
 			JSR	Map::ProcessFrame
 			JSR	Entity::ProcessFrame
@@ -150,15 +193,25 @@ End:
 .rodata
 .proc GameStateTable
 	.addr	PlayGame::Continue	; PLAYING
-	.addr	PlayGame::End		; GAME_OVER
+	.addr	GameOver		; GAME_OVER
 	.addr	Paused			; PAUSED
 .endproc
+
+.code
 
 
 ;; Pause the game until start is pressed
 .A16
 .I16
 .routine Paused
+	SEP	#$20
+.A8
+	JSR	Console::NewLine
+	CPrintString	"PAUSED"
+
+	REP	#$30
+.A16
+
 	; Loop until start pressed
 	REPEAT
 		WAI
@@ -169,7 +222,35 @@ End:
 		AND	#JOY_START
 	UNTIL_NOT_ZERO
 
+	JSR	Console::Clear
+
 	JMP	PlayGame::Continue
+.endroutine
+
+
+;; Show game over message
+.A16
+.I16
+.routine GameOver
+	SEP	#$20
+.A8
+	JSR	Console::NewLine
+	CPrintString	"GAME OVER - PRESS START"
+
+	REP	#$30
+.A16
+
+	; Loop until start pressed
+	REPEAT
+		WAI
+
+		JSR	Controller::Update
+
+		LDA	Controller::pressed
+		AND	#JOY_START
+	UNTIL_NOT_ZERO
+
+	JMP	PlayGame::End
 .endroutine
 
 .endmodule

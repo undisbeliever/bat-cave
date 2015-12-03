@@ -18,20 +18,6 @@
 .I16
 	REPEAT
 		JSR	GameLoop::PlayGame
-
-		REPEAT
-			WAI
-
-			REP	#$30
-.A16
-			JSR	Controller::Update
-
-			SEP	#$20
-.A8
-
-			LDA	Controller::current + 1
-			AND	#JOYH_START
-		UNTIL_NOT_ZERO
 	FOREVER
 .endroutine
 
