@@ -7,6 +7,7 @@
 
 .include "resources/metasprites.h"
 
+.include "controller.h"
 .include "gameloop.h"
 .include "map.h"
 
@@ -70,7 +71,7 @@ AUTOSCROLL_FORCE_PADDING = 12
 .routine ProcessFrame
 	; ::DEBUG move bat with joypad::
 	; ::TODO do properly::
-	LDA	f:JOY1
+	LDA	Controller::current
 	IF_BIT	#JOY_LEFT
 		LDXY	#-$20000
 
@@ -82,7 +83,7 @@ AUTOSCROLL_FORCE_PADDING = 12
 	ENDIF
 	STXY	BES::xVecl
 
-	LDA	f:JOY1
+	LDA	Controller::current
 	IF_BIT	#JOY_UP
 		LDXY	#-$C000
 

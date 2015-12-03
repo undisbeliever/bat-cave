@@ -8,6 +8,7 @@
 .include "common/console.h"
 .include "common/ppu.h"
 
+.include "controller.h"
 .include "entity.h"
 .include "map.h"
 .include "vram.h"
@@ -111,13 +112,14 @@
 Continue:
 	STZ	state
 		REPEAT
+			JSR	Controller::Update
+
 			JSR	Map::ProcessFrame
 			JSR	Entity::ProcessFrame
 			JSR	Entity::RenderFrame
 
 			; Handle pausing the game
-			LDA	f:JOY1
-			ORA	f:JOY2
+			LDA	Controller::pressed
 			IF_BIT	#JOY_START
 				LDX	#GameState::PAUSED
 				STX	state
@@ -155,29 +157,15 @@ End:
 .A16
 .I16
 .routine Paused
-	; Wait for start to be released
-	REPEAT
-		LDA	f:JOY1
-		ORA	f:JOY2
-		AND	#JOY_START
-	UNTIL_ZERO
-
-
 	; Loop until start pressed
 	REPEAT
 		WAI
 
-		LDA	f:JOY1
-		ORA	f:JOY2
+		JSR	Controller::Update
+
+		LDA	Controller::pressed
 		AND	#JOY_START
 	UNTIL_NOT_ZERO
-
-	; Wait for start to be released
-	REPEAT
-		LDA	f:JOY1
-		ORA	f:JOY2
-		AND	#JOY_START
-	UNTIL_ZERO
 
 	JMP	PlayGame::Continue
 .endroutine

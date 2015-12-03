@@ -4,6 +4,7 @@
 .include "common/structure.inc"
 .include "common/registers.inc"
 
+.include "controller.h"
 .include "gameloop.h"
 
 .setcpu "65816"
@@ -21,7 +22,14 @@
 		REPEAT
 			WAI
 
-			LDA	JOY1H
+			REP	#$30
+.A16
+			JSR	Controller::Update
+
+			SEP	#$20
+.A8
+
+			LDA	Controller::current + 1
 			AND	#JOYH_START
 		UNTIL_NOT_ZERO
 	FOREVER
