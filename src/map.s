@@ -9,6 +9,7 @@
 .include "common/ppu.h"
 
 .include "entity.h"
+.include "random.h"
 .include "vram.h"
 .include "resources/font.h"
 
@@ -20,7 +21,7 @@
 
 .define CHUNK_WIDTH 8
 
-.define PADDING_WIDTH 64
+.define PADDING_WIDTH 32
 .assert 256 .mod PADDING_WIDTH = 0, error, "Bad PADDING_WIDTH"
 .assert PADDING_WIDTH > 8, error, "Bad PADDING_WIDTH"
 
@@ -32,6 +33,26 @@ TILE_HEIGHT = SCREEN_HEIGHT / 8
 X_VELOCITY_INIT = $09C00
 
 CAVE_COLOR = $114C
+
+MAP_INITIAL_CEILING_VELOCITY    = $0000
+MAP_INITIAL_HEIGHT		= $8000
+MAP_INITIAL_CEILING_POSITION    = ((SCREEN_HEIGHT << 8) - MAP_INITIAL_HEIGHT) / 2
+
+MAP_MAX_HEIGHT			= $8000
+MAP_MIN_HEIGHT			= $1C00
+MAP_RESET_MIN_HEIGHT		= $2000
+MAP_RESET_MAX_HEIGHT		= $4000
+
+MAP_HEIGHT_MAX_INCREMENT	= $0020
+MAP_HEIGHT_MAX_DECREMENT	= $0030
+
+MAP_VERTICAL_PADDING		= $07C0
+MAP_CEILING_MAX_ACCELERATION	= $0080
+MAP_CEILING_MAX_VECL		= $0280
+
+
+MAP_CEILING_MIN_SECTION		= 4
+MAP_CEILING_MAX_SECTION		= 30
 
 
 .enum State
@@ -101,12 +122,29 @@ mapBuffer_size = * - mapBuffer
 	;; Generate patterns of the map
 	.proc generate
 		;; Velocity (up/down) of map when generating it
-		;; (1:7:16 fint)
-		velocity:	.res 2
+		;; (1:7:8 fint)
+		ceilingVelocity:	.res 2
 
 		;; Position of the Velocity (up/down) of map when generating it
-		;; (1:7:16 fint)
-		current:	.res 2
+		;; (1:7:8 fint)
+		ceilingPosition:	.res 2
+
+		;; Number of pixels left until the current velocity update
+		velocityLength:		.res 2
+
+
+		;; the minimum value of ceilingPosition
+		;; (8:8 fint)
+		ceilingMinLimit:	.res 2
+
+		;; the maximum value of ceilingPosition
+		;; (8:8 fint)
+		ceilingMaxLimit:	.res 2
+
+
+		;; Height of the map section
+		;; (8:8 fint)
+		currentHeight:		.res 2
 	.endproc
 
 
@@ -186,11 +224,21 @@ mapBuffer_size = * - mapBuffer
 	STA	xVelocity + 2
 
 
-	; ::DEBUG initial data::
-	LDA	#$00C0
-	STA	generate::velocity
-	LDA	#$0800
-	STA	generate::current
+	LDA	#MAP_INITIAL_CEILING_VELOCITY
+	STA	generate::ceilingVelocity
+	LDA	#MAP_INITIAL_CEILING_POSITION
+	STA	generate::ceilingPosition
+
+	LDA	#MAP_INITIAL_HEIGHT
+	STA	generate::currentHeight
+
+	LDA	#MAP_VERTICAL_PADDING
+	STA	generate::ceilingMinLimit
+	LDA	#(SCREEN_HEIGHT << 8) - MAP_VERTICAL_PADDING - MAP_INITIAL_HEIGHT
+	STA	generate::ceilingMaxLimit
+
+	LDA	#280
+	STA	generate::velocityLength
 
 
 	; Build initial map
@@ -431,40 +479,112 @@ Collision:
 	; Generate height/floor map
 	LDY	#PADDING_WIDTH
 	REPEAT
-		LDA	generate::velocity
+		LDA	generate::ceilingPosition
 		CLC
-		ADC	generate::current
-		CMP	#8 << 8
+		ADC	generate::ceilingVelocity
+		CMP	generate::ceilingMinLimit
 		IF_LT
-			LDA	generate::velocity
+			LDA	generate::ceilingVelocity
 			NEG
-			STA	generate::velocity
+			STA	generate::ceilingVelocity
 
-			LDA	#8 << 8
+			LDA	generate::ceilingMinLimit
 		ELSE
-			CMP	#(SCREEN_HEIGHT - 128) << 8
+			CMP	generate::ceilingMaxLimit
 			IF_GE
-				LDA	generate::velocity
+				LDA	generate::ceilingVelocity
 				NEG
-				STA	generate::velocity
+				STA	generate::ceilingVelocity
 
-				LDA	#(SCREEN_HEIGHT - 128) << 8
+				LDA	generate::ceilingMaxLimit
 			ENDIF
 		ENDIF
 
-		STA	generate::current
+		STA	generate::ceilingPosition
 
-
+		SEP	#$20
+.A8
 		XBA
-		AND	#$00FF
 		STA	ceiling, X
 
 		CLC
-		ADC	#119
+		ADC	generate::currentHeight + 1
 		STA	floor, X
+
+		REP	#$30
+.A16
 
 		INX
 		INX
+
+		; Randomize values
+		; ----------------
+
+		PHX
+		PHY
+
+		DEC	generate::velocityLength
+		IF_MINUS
+			LDA	#MAP_CEILING_MAX_ACCELERATION * 2
+			JSR	Random::Rnd_U16A
+			SEC
+			SBC	#MAP_CEILING_MAX_ACCELERATION
+
+			CLC
+			ADC	generate::ceilingVelocity
+
+			CMP	#.loword(-MAP_CEILING_MAX_VECL)
+			IF_LT
+				CMP	#MAP_CEILING_MAX_VECL
+				IF_GE
+					LDA	#0
+				ENDIF
+			ENDIF
+			STA	generate::ceilingVelocity
+
+
+			LDA	#MAP_CEILING_MAX_SECTION - MAP_CEILING_MIN_SECTION
+			JSR	Random::Rnd_U16A
+			ADC	#MAP_CEILING_MIN_SECTION
+			STA	generate::velocityLength
+		ENDIF
+
+
+		; Update (change height)
+		LDA	#MAP_HEIGHT_MAX_DECREMENT + MAP_HEIGHT_MAX_INCREMENT
+		JSR	Random::Rnd_U16A
+		SEC
+		SBC	#MAP_HEIGHT_MAX_DECREMENT
+
+		CLC
+		ADC	generate::currentHeight
+
+		CMP	#MAP_MAX_HEIGHT
+		IF_GE
+			LDA	#MAP_MAX_HEIGHT
+		ELSE
+			CMP	#MAP_MIN_HEIGHT
+			IF_LT
+				; Randomize reset height
+				LDA	#MAP_RESET_MAX_HEIGHT - MAP_RESET_MIN_HEIGHT
+				JSR	Random::Rnd_U16A
+				CLC
+				ADC	#MAP_RESET_MIN_HEIGHT
+			ENDIF
+		ENDIF
+		STA	generate::currentHeight
+
+
+		; Recalculate limit
+
+		LDA	#(SCREEN_HEIGHT << 8) - MAP_VERTICAL_PADDING
+		SEC
+		SBC	generate::currentHeight
+		STA	generate::ceilingMaxLimit
+
+		PLY
+		PLX
+
 		DEY
 	UNTIL_ZERO
 

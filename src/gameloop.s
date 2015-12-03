@@ -11,6 +11,7 @@
 .include "controller.h"
 .include "entity.h"
 .include "map.h"
+.include "random.h"
 .include "vram.h"
 .include "resources/font.h"
 
@@ -113,6 +114,7 @@ Continue:
 	STZ	state
 		REPEAT
 			JSR	Controller::Update
+			JSR	Random::AddJoypadEntropy
 
 			JSR	Map::ProcessFrame
 			JSR	Entity::ProcessFrame
