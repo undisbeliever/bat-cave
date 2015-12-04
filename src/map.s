@@ -40,6 +40,9 @@ MAP_INITIAL_CEILING_POSITION    = ((SCREEN_HEIGHT << 8) - MAP_INITIAL_HEIGHT) / 
 
 MAP_MAX_HEIGHT			= $8000
 MAP_MIN_HEIGHT			= $1C00
+MAP_STEEP_HEIGHT_CHECK		= $2800
+MAP_STEEP_HEIGHT_INCREMENT	= $0040
+
 MAP_RESET_MIN_HEIGHT		= $2000
 MAP_RESET_MAX_HEIGHT		= $4000
 
@@ -49,6 +52,7 @@ MAP_HEIGHT_MAX_DECREMENT	= $0030
 MAP_VERTICAL_PADDING		= $07C0
 MAP_CEILING_MAX_ACCELERATION	= $0080
 MAP_CEILING_MAX_VECL		= $0280
+MAP_CEILING_STEEP_VECL		= $01C0
 
 
 MAP_CEILING_MIN_SECTION		= 4
@@ -470,18 +474,22 @@ Collision:
 	STA	xOffset
 
 
-	; ::TODO replace with proper random movement::
-	; ::TODO ramp up difficulty as level progresses::
-
 	; Generate new segment
 	LDX	#256 * 2
 
 	; Generate height/floor map
 	LDY	#PADDING_WIDTH
 	REPEAT
-		LDA	generate::ceilingPosition
+		; Add random noise to ceiling
+		LDA     Random::seed + 1
+		AND     #$01FF
+		SBC     #$0100
+		CLC
+		ADC     generate::ceilingPosition
+
 		CLC
 		ADC	generate::ceilingVelocity
+
 		CMP	generate::ceilingMinLimit
 		IF_LT
 			LDA	generate::ceilingVelocity
@@ -573,6 +581,23 @@ Collision:
 			ENDIF
 		ENDIF
 		STA	generate::currentHeight
+
+
+		; Increase min height if ceiling velocity is step
+		LDA	generate::ceilingVelocity
+		IF_MINUS
+			NEG
+		ENDIF
+		CMP	#MAP_CEILING_STEEP_VECL
+		IF_GE
+			LDA	generate::currentHeight
+			CMP	#MAP_STEEP_HEIGHT_CHECK
+			IF_LT
+				CLC
+				ADC	#MAP_STEEP_HEIGHT_INCREMENT
+				STA	generate::currentHeight
+			ENDIF
+		ENDIF
 
 
 		; Recalculate limit
