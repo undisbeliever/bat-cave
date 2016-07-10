@@ -7,17 +7,6 @@
 
 ;; This module is a Linear congruential psudeo random number generator.
 ;;
-;; It uses the following algorithm
-;;
-;; 	Seed = (A * SEED +C) MOD M
-;;
-;; NOTES: A must be a multiplier of 4 plus one
-;;        C should be psudeoprime (or at least odd)
-;;
-;;
-;; To generate a random number between 1 and ?
-;; RndNum = {Seed+2} MOD ? + 1
-;;
 ;; In order to increase the observed randomness of this module,
 ;; the function `AddJoypadEntropy` should be called once every frame.
 ;; This will cycle the random number generator once or twice, depending

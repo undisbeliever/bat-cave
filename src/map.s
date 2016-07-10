@@ -481,7 +481,8 @@ Collision:
 	LDY	#PADDING_WIDTH
 	REPEAT
 		; Add random noise to ceiling
-		LDA     Random::seed + 1
+		LDA     Random::seed + 2
+        XBA
 		AND     #$01FF
 		SBC     #$0100
 		CLC
