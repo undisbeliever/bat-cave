@@ -7,9 +7,6 @@
 
 .setcpu "65816"
 
-; ::TODO dynamic tilesets::
-; ::TODO dynamic-fixed tilesets::
-
 .assert METASPRITE_VRAM_TILE_SLOTS .mod 8 = 0, error, "METASPRITE_VRAM_TILE_SLOTS must be divisible by 8"
 .assert METASPRITE_VRAM_TILE_SLOTS / 8 + METASPRITE_VRAM_ROW_SLOTS <= 16, error, "Only 16 VRAM rows can be allocated to MetaSprite Module"
 

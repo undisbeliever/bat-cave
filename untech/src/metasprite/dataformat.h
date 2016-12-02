@@ -3,28 +3,10 @@
 .ifndef ::_METASPRITE_DATAFORMAT_H_
 ::_METASPRITE_DATAFORMAT_H_ = 1
 
-; ::TODO metasprite frameSet::
-; ::: include wether fixed or dynamic metasprites::
-
-; ::TODO animation format::
-
 .enum MetaSprite__FrameSet_TilesetLifecycle
 	;; The entity's tileset doesn't change.
 	;; It is loaded into VRAM once and shared amonst entities
 	FIXED		= 0
-
-	;; The entity has a dynamic tileset
-	;; It is loaded into VRAM every metasprite frame change
-	; ::TODO implement::
-	DYNAMIC		= 2
-
-	;; The entity has a dynamic tilset, with some fixed components
-	;; The last X tiles of the frameSet are fixed.
-	;; The first (size - X) tiles are dynamic and change every msFrame.
-	; ::TODO implement::
-	DYNAMIC_FIXED	= 4
-
-	; ::TODO add tileset size for dynamic tilesets::
 .endenum
 
 
@@ -319,8 +301,6 @@
 ;; with the meta-tilemap.
 ;;
 ;; For the moment the engine only supports a single AABB hitbox.
-
-; ::SHOULDO handle a more complex hitboxes::
 
 .struct MetaSprite__TileCollisionHitbox
 	;; xOffset of the hitbox, relative to `origin.x - 128`

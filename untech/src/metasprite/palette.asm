@@ -15,7 +15,6 @@
 
 .segment "SHADOW"
 	;; The palette buffer needs to be copied to VRAM if this is 0
-	; ::TODO should move to different class;
 	updatePaletteBufferOnZero: .res 1
 
 .segment "WRAM7E"
@@ -28,7 +27,6 @@
 	.endproc
 
 	;; The sprite palette buffer
-	; ::TODO should move to different class;
 	paletteBuffer:		.res N_PALETTE_SLOTS * 32
 
 

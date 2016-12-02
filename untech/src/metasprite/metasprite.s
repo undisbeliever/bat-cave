@@ -92,14 +92,12 @@
 .rodata
 FunctionTable:
 	.addr	Activate_FixedTileset
-	.addr	Activate_Dynamic
-	.addr	Activate_DynamicFixed
-	.addr	Activate_Dynamic
+	.addr	Empty
+	.addr	Empty
+	.addr	Empty
 .code
 
-Activate_Dynamic:
-Activate_DynamicFixed:
-	; ::TODO implement::
+Empty:
 	RTS
 .endroutine
 
@@ -143,7 +141,7 @@ Activate_DynamicFixed:
 	.assert METASPRITE_STATUS_DYNAMIC_TILESET_FLAG = $40, error, "bad code"
 	BIT	z:MSDP::status - 1
 	IF_V_SET
-		; ::TODO handle dynamic tilesets::
+        ; Invalid state
 		STP
 	ENDIF
 

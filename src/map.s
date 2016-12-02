@@ -784,7 +784,6 @@ tmp_tileBufferPos := tmp6
 .I8
 .routine VBlank
 
-; ::MAYDO make macro::
 	; Upload a chunk of tiles
 	LDA	updateTileBufferVram
 	IF_NOT_ZERO
@@ -831,7 +830,6 @@ tmp_tileBufferPos := tmp6
 		STX	MDMAEN
 	ENDIF
 
-	; ::TODO upload map
 
 	LDX	xPos + 2
 	STX	VRAM::BackgroundHOFS
