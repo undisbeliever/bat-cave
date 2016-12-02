@@ -16,6 +16,8 @@
 .include "vram.h"
 .include "resources/font.h"
 
+.import screenBrightness
+
 .setcpu "65816"
 
 .module GameLoop
@@ -107,7 +109,7 @@ SCORE_YPOS = 20
 	STA	NMITIMEN
 
 	LDA	#$0F
-	STA	INIDISP
+	STA	screenBrightness
 .endmacro
 
 

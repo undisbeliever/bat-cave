@@ -170,6 +170,8 @@ TileSlots_VramAddresses:
 ;;
 ;; This routine should only be called by Activate.
 ;;
+;; NOTE: Does not preform a proper VBlank overflow check
+;;
 ;; REQUIRES: 16 bit A, 16 bit Index, DB = $7E
 ;;
 ;; INPUT:
@@ -352,7 +354,6 @@ OneBlock_EmptySlot:
 	PHX
 
 	; Add to tileset DMA table
-	; ::SHOULDO add vblank timing check::
 
 	; Check if table has overflowed
 	LDY	dmaTableIndex
@@ -524,7 +525,6 @@ TwoBlocks_EmptySlot:
 
 
 	; Transfer to DMA
-	; ::SHOULDO add vblank timing check::
 
 	; Check if table has overflowed
 	LDY	dmaTableIndex

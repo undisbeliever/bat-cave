@@ -12,6 +12,11 @@
 
 .setcpu "65816"
 
+.segment "SHADOW"
+	screenBrightness:	.res 2
+
+.export screenBrightness
+
 .code
 
 
@@ -32,6 +37,10 @@
 	SEP	#$10
 .A16
 .I8
+	; ensure screen blank so all DMA transfers will succeed
+	LDY	#INIDISP_FORCE
+	STY	INIDISP
+
 	LDA	#$4300
 	TCD
 
@@ -70,6 +79,11 @@
 	REPEAT
 		BIT	HVJOY
 	UNTIL_ZERO
+
+
+	; Load screen brightness
+	LDY	screenBrightness
+	STY	INIDISP
 
 
 	; Load State
