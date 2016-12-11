@@ -191,7 +191,7 @@ End:
 
 ;; These functions are called when the game state changes
 ;; They will jump to either `PlayGame::Continue` or `PlayGame::End` upon completion.
-;; 
+;;
 .rodata
 .proc GameStateTable
 	.addr	PlayGame::Continue	; PLAYING
