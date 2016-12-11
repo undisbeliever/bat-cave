@@ -19,7 +19,7 @@
 	;; (word)
 	.importlabel	state
 
-	;; Process tha game loop
+	;; Process the game loop
 	;; REQUIRES: 8 bit A, 16 bit Index, DB = $80
 	.importroutine PlayGame
 .endimportmodule

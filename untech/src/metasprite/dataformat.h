@@ -5,7 +5,7 @@
 
 .enum MetaSprite__FrameSet_TilesetLifecycle
 	;; The entity's tileset doesn't change.
-	;; It is loaded into VRAM once and shared amonst entities
+	;; It is loaded into VRAM once and shared amongst entities
 	FIXED		= 0
 .endenum
 
@@ -14,7 +14,7 @@
 .struct MetaSprite__FrameSet
 	;; Address of the fixed tileset used by the FrameSet (if fixed)
 	;;
-	;; The tilset must be in the `METASPRITE_TILESET_BLOCK` bank.
+	;; The tileset must be in the `METASPRITE_TILESET_BLOCK` bank.
 	;;
 	;; If this value is NULL (0) then no tileset is loaded.
 	tileset			.addr
@@ -35,8 +35,8 @@
 	;; The table is a list of `.addr`s that point to the frame data
 	;; in the `METASPRITE_FRAME_DATA_BLOCK`
 	;;
-	;; This table may contain more than nFrames. But they will only
-	;; be accessable by the animation subsystem.
+	;; This table may contain more than `nFrames`. But they will only
+	;; be accessible by the animation subsystem.
 	frameList		.addr
 	;; Number of frames in the frame table
 	nFrames			.byte
@@ -70,7 +70,7 @@
 	;; Address of the `MetaSprite__Tileset` struct within the
 	;; `METASPRITE_TILESET_BLOCK` bank.
 	;;
-	;; Only read if the frameSet uses a dynamic tileset.
+	;; Only read if the FrameSet uses a dynamic tileset.
 	tilesetTable		.addr
 .endstruct
 
@@ -143,8 +143,8 @@
 		;; Object attributes
 		;;
 		;; vhoo000s
-		;;	v    - vflip
-		;;	h    - hflip
+		;;	v    - vFlip
+		;;	h    - hFlip
 		;;	oo   - order (0 - 3)
 		;;	s    - size (0 = small, 1 = large)
 		attr		.byte
@@ -191,7 +191,7 @@
 
 	;; The address of the tile.
 	;; Each tile is 128 bytes in size
-	;; Repeated nTiles times
+	;; Repeated `nTiles` times
 	address		.faraddr
 .endstruct
 

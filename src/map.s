@@ -28,7 +28,7 @@
 SCREEN_HEIGHT = 224
 TILE_HEIGHT = SCREEN_HEIGHT / 8
 
-;; Inital X velocity
+;; Initial X velocity
 ;; (0:16:16)
 X_VELOCITY_INIT = $09C00
 
@@ -84,7 +84,7 @@ MAP_CEILING_MAX_SECTION		= 30
 	;; The game state
 	state:			.res 2
 
-	;; The current xVeclocity of the background
+	;; The current xVelocity of the background
 	;; abs(xVelocity) MUST <= 8, and SHOULD BE <= 4.0
 	;; (0:16:16 fixed point)
 	xVelocity:		.res 4
@@ -109,7 +109,7 @@ MAP_CEILING_MAX_SECTION		= 30
 	;; (word index)
 	chunkPos:		.res 2
 
-	;; The index of the VRAM word addres tiles to upload
+	;; The index of the VRAM word address tiles to upload
 	;; (word index)
 	chunkVramTileOffset:	.res 2
 
@@ -400,8 +400,8 @@ Collision:
 .routine ProcessFrame_AfterRender
 	; Executed on the frame after a RenderChunk call
 	;
-	; This is to prevent lag by preventing a GenerateMap routine
-	; and a RenderChunk routine from executing in the same frame.
+	; This is to prevent lag by preventing a `GenerateMap` routine
+	; and a `RenderChunk` routine from executing in the same frame.
 
 	LDA	chunkPos
 	CMP	#(256 + PADDING_WIDTH) * 2

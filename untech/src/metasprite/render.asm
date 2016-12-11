@@ -14,7 +14,7 @@
 ;
 ; The handling of the OAM hi-Table was inspired by psycopathicteen[1].
 ;
-; The MetaSprite block*CharAttrOffset variales are designed to allow the
+; The MetaSprite block*CharAttrOffset variables are designed to allow the
 ; MetaSprite VRAM allocator to allocate and deallocate 2 VRAM Rows/Tiles
 ; without worrying about fragmentation.
 ;
@@ -44,7 +44,7 @@ FRAME_CHARATTR_MASK	= $F01F
 	;; bits 11-15 of each 4 byte block MUST BE CLEAR
 	xposBuffer:		.res 128 * 4
 
-	; Only hald of xPosBuffer is acutally used, save the bytes for variables
+	; Only half of xPosBuffer is acutally used, save the bytes for variables
 
 	bufferPos		:= xposBuffer + 0*4 + 2
 	previousBufferPos	:= xposBuffer + 1*4 + 2
@@ -126,7 +126,7 @@ nObjectsLeft := tmp1
 	BEQ	RenderFrame_Return
 	STA	nObjectsLeft
 
-	; Do a single buffer overflow check here instead of muliple ones in the loop
+	; Do a single buffer overflow check here instead of multiple ones in the loop
 	ASL
 	ASL
 	; carry clear
@@ -278,7 +278,7 @@ Continue:
 
 
 SkipHiTable:
-	; Move all sprites that were onscreen in the previous frame offscreen
+	; Move all excess sprites that were on-screen in the previous frame off-screen
 
 	LDX	bufferPos
 	CPX	previousBufferPos

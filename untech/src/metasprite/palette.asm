@@ -18,7 +18,7 @@
 	updatePaletteBufferOnZero: .res 1
 
 .segment "WRAM7E"
-	;; Table that conatains the address/refence count of each palette
+	;; Table that contains the address/reference count of each palette
 	;; used by the MetaSprite engine
 	;; Array of structures
 	.proc paletteSlots
@@ -61,7 +61,7 @@
 	BIT	z:MSDP::status - 1
 	.assert METASPRITE_STATUS_PALETTE_SET_FLAG = $80, error, "BIT optimisation"
 	IF_N_SET
-		; luckally palette bits match the palette slot index
+		; luckily palette bits match the palette slot index
 		LDA	z:MSDP::blockOneCharAttrOffset + 1
 		AND	#OAM_ATTR_PALETTE_MASK
 		TAX
@@ -134,7 +134,7 @@ firstFreeSlot	:= tmp3
 		; If address has changed, decrement reference count
 		; If address if equal, just return true
 
-		; luckally palette bits match the palette slot index
+		; luckily palette bits match the palette slot index
 		LDA	z:MSDP::blockOneCharAttrOffset + 1
 		AND	#OAM_ATTR_PALETTE_MASK
 		TAX
@@ -229,7 +229,7 @@ DuplicateSlotFound:
 	; (c never changed by AND or ORA)
 
 	; Set palette bits in offsets
-	; luckally palette bits match the palette slot index
+	; luckily palette bits match the palette slot index
 	; tmp_slotIndex always <= 7 * 2
 
 	LDA	z:MSDP::blockOneCharAttrOffset + 1

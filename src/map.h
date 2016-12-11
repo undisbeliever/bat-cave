@@ -13,7 +13,7 @@
 	.importlabel xPos
 
 
-	;; Sets up the sreen
+	;; Sets up the screen
 	;;
 	;; REQUIRES: 8 bit A, 16 bit Index, DB access registers, force blank, no interrupts
 	.importroutine SetupScreen

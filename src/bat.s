@@ -208,7 +208,7 @@ AUTOSCROLL_FORCE_PADDING = 12
 	STA	z:BES::yPos + 2
 
 
-	; Force the bat onscreen
+	; Force the bat on-screen
 	LDA	Map::xPos + 2
 	CLC
 	ADC	#AUTOSCROLL_FORCE_PADDING

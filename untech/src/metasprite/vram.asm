@@ -15,7 +15,7 @@
 
 
 .segment "WRAM7E"
-	;; Table that conatains the address/refence count of each vram slot
+	;; Table that contains the address/reference count of each VRAM slot
 	;; Array of structures
 	.proc vramSlots
 		;; address of tileset in METASPRITE_TILESET_BLOCK bank
@@ -101,7 +101,7 @@ TileSlots_VramAddresses:
 
 ;; Removes the tileset from the slots
 ;;
-;; Because of the onderflow check in count this routine
+;; Because of the underflow check in count this routine
 ;; can be used on both tileset types.
 ;;
 ;; Should not be called directly.
@@ -154,14 +154,14 @@ TileSlots_VramAddresses:
 ;;	A: tileset address
 ;;
 ;; OUTPUT:
-;;	C set if succeesful
+;;	C set if successful
 .exportlabel UploadFixedTileset
 
 
 ;; Uploads (if necessary) a fixed metasprite tileset into VRAM.
 ;;
 ;; A fixed tileset is one that does not change throughout the
-;; life of the frameSet that the metasprite belongs to. Because
+;; life of the FrameSet that the metasprite belongs to. Because
 ;; of this we can scan though all the slots in order to detect
 ;; duplicates.
 ;;
@@ -175,7 +175,7 @@ TileSlots_VramAddresses:
 ;;	DP: MetaSpriteStruct address - MetaSpriteDpOffset
 ;;
 ;; OUTPUT:
-;;	C set if succeesful
+;;	C set if successful
 .A16
 .I16
 .routine Activate_FixedTileset

@@ -11,7 +11,7 @@
 CONFIG ENTITY_STRUCT_SIZE, 64
 
 .enum EntityFunctions
-	;; Called when ititializing the entity
+	;; Called when initializing the entity
 	;;
 	;; REGISTERS: 16 bit A, 16 bit Index, DB = $7E
 	;; INPUT: DP = entity
