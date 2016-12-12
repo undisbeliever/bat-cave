@@ -132,23 +132,25 @@ Fly:
 .segment METASPRITE_FRAME_DATA_BLOCK
 N_FRAMES = 11
 FrameData:
-	.addr	FO::Rest,      0, THB::Rest, 0, Tileset
-	.addr	FO::FlyRight0, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyRight1, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyRight2, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyRight3, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyRight4, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyLeft0, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyLeft1, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyLeft2, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyLeft3, 0, THB::Fly,  0, Tileset
-	.addr	FO::FlyLeft4, 0, THB::Fly,  0, Tileset
+	.addr	FO::Rest,      THB::Rest, Tileset
+
+	.addr	FO::FlyRight0, THB::Fly,  Tileset
+	.addr	FO::FlyRight1, THB::Fly,  Tileset
+	.addr	FO::FlyRight2, THB::Fly,  Tileset
+	.addr	FO::FlyRight3, THB::Fly,  Tileset
+	.addr	FO::FlyRight4, THB::Fly,  Tileset
+
+	.addr	FO::FlyLeft0,  THB::Fly,  Tileset
+	.addr	FO::FlyLeft1,  THB::Fly,  Tileset
+	.addr	FO::FlyLeft2,  THB::Fly,  Tileset
+	.addr	FO::FlyLeft3,  THB::Fly,  Tileset
+	.addr	FO::FlyLeft4,  THB::Fly,  Tileset
 
 
 .segment METASPRITE_FRAME_LIST_BLOCK
 FrameList:
 .repeat N_FRAMES, i
-	.addr	FrameData + 10 * i
+	.addr	FrameData + 6 * i
 .endrepeat
 
 
@@ -161,8 +163,6 @@ FrameSet:
 	.byte	N_PALETTES	; nPalettes
 	.addr	FrameList	; frameList
 	.byte	N_FRAMES	; nFrames
-	.addr	0		; animationList
-	.byte	0		; nAnimations
 
 
 .segment METASPRITE_FRAMESET_LIST_BLOCK
