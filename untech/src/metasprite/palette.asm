@@ -214,7 +214,7 @@ CopyPalette:
 	LDX	z:MSDP::palette
 
 	LDA	#15 * 2 - 1
-	MVN	$7E, paletteDataBank		; ca65 uses dest,src
+	MVN	#paletteDataBank, #$7E
 
 
 ; Update charAttrOffset bits
@@ -275,7 +275,7 @@ bufferAddress	:= tmp2
 
 			TAX
 			LDA	#15 * 2 - 1
-			MVN	$7E, paletteDataBank	; ca65 uses dest,src
+			MVN	#paletteDataBank, #$7E
 
 			LDX	slotIndex
 			LDY	bufferAddress

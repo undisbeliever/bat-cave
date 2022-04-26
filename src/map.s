@@ -454,12 +454,12 @@ Collision:
 	LDX	#.loword(ceiling + 2 * PADDING_WIDTH)
 	LDY	#.loword(ceiling)
 	LDA	#256 * 2 - 1
-	MVN	$7E, $7E
+	MVN	#$7E, #$7E
 
 	LDX	#.loword(floor + 2 * PADDING_WIDTH)
 	LDY	#.loword(floor)
 	LDA	#256 * 2 - 1
-	MVN	$7E, $7E
+	MVN	#$7E, #$7E
 
 
 	; Move map pointers
